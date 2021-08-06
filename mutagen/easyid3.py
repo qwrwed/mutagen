@@ -164,6 +164,54 @@ class EasyID3(DictMixin, Metadata):
 
         cls.RegisterKey(key, getter, setter, deleter)
 
+    @classmethod
+    def RegisterCommentKey(cls, lang='\0\0\0', desc=''):
+        """Register a comment key, stored in a COMM frame.
+
+        By default, comments use a null language and empty description, for
+        compatibility with other tagging software.  Call this method with
+        other parameters to override the defaults.::
+
+            EasyID3.RegisterCOMMKey(lang='eng')
+        """
+        frameid = ':'.join(('COMM', desc, lang))
+
+        def getter(id3, key):
+            frame = id3.get(frameid)
+            return None if frame is None else list(frame)
+
+        def setter(id3, key, value):
+            id3.add(mutagen.id3.COMM(
+                encoding=3, lang=lang, desc=desc, text=value))
+
+        def deleter(id3, key):
+            del id3[frameid]
+
+        EasyID3.RegisterKey('comment', getter, setter, deleter)
+
+    @classmethod
+    def RegisterUrlKey(cls, desc=''):
+        """Register a url key, stored in a WXXX frame.
+
+        By default, URLs use an empty description.  Call this method with a
+        different parameter to override the default.::
+
+            EasyID3.RegisterWXXXKey(desc='artist')
+        """
+        frameid = ':'.join(('WXXX', desc))
+
+        def getter(id3, key):
+            frame = id3.get(frameid)
+            return None if frame is None else [frame.url]
+
+        def setter(id3, key, value):
+            id3.add(mutagen.id3.WXXX(encoding=3, desc=desc, url=value[0]))
+
+        def deleter(id3, key):
+            del id3[frameid]
+
+        EasyID3.RegisterKey('url', getter, setter, deleter)
+
     def __init__(self, filename=None):
         self.__id3 = ID3()
         if filename is not None:
@@ -497,6 +545,7 @@ for frameid, key in {
     "TSRC": "isrc",
     "TSST": "discsubtitle",
     "TLAN": "language",
+    "TOPE": "originalartist",
 }.items():
     EasyID3.RegisterTextKey(key, frameid)
 
@@ -513,6 +562,8 @@ EasyID3.RegisterKey("website", website_get, website_set, website_delete)
 EasyID3.RegisterKey(
     "replaygain_*_gain", gain_get, gain_set, gain_delete, peakgain_list)
 EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
+EasyID3.RegisterCommentKey()
+EasyID3.RegisterUrlKey()
 
 # At various times, information for this came from
 # http://musicbrainz.org/docs/specs/metadata_tags.html
