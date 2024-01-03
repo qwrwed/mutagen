@@ -177,8 +177,7 @@ class EasyID3(DictMixin, Metadata):
         frameid = ':'.join(('COMM', desc, lang))
 
         def getter(id3, key):
-            frame = id3.get(frameid)
-            return None if frame is None else list(frame)
+            return list(id3[frameid])
 
         def setter(id3, key, value):
             id3.add(mutagen.id3.COMM(
@@ -201,8 +200,7 @@ class EasyID3(DictMixin, Metadata):
         frameid = ':'.join(('WXXX', desc))
 
         def getter(id3, key):
-            frame = id3.get(frameid)
-            return None if frame is None else [frame.url]
+            return [id3[frameid].url]
 
         def setter(id3, key, value):
             id3.add(mutagen.id3.WXXX(encoding=3, desc=desc, url=value[0]))
